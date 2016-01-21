@@ -1,5 +1,8 @@
 package com.oleaarnseth.weathercast;
 
+import android.app.FragmentManager;
+import android.app.ProgressDialog;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -8,8 +11,14 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 public class WeatherActivity extends AppCompatActivity {
+    // String-tag som identifiserer handlerfragmentet i fragmentmanager:
+    public static final String HANDLER_FRAGMENT_TAG = "weatherapi_handler_fragment";
+
+    private ProgressDialog progressDialog;
+    private WeatherAPIHandlerFragment handlerFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +35,75 @@ public class WeatherActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+        // Sett opp hodeløst fragment med AsyncTask som henter XML-data fra WeatherAPI:
+        FragmentManager fm = getFragmentManager();
+        handlerFragment = (WeatherAPIHandlerFragment) fm.findFragmentByTag(HANDLER_FRAGMENT_TAG);
+
+        if (handlerFragment == null) {
+            handlerFragment = WeatherAPIHandlerFragment.newInstance();
+            fm.beginTransaction().add(handlerFragment, HANDLER_FRAGMENT_TAG).commit();
+        }
+
+        // ProgressDialog som vises mens AsyncTask-en kjører:
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle(getResources().getString(R.string.progressdialog_hdr));
+        progressDialog.setMessage(getResources().getString(R.string.progressdialog_text));
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setCancelable(false);
+
+        // Hvis dette er første gangen aktiviteten kjører må FetchTask-en startes:
+        if (savedInstanceState == null) {
+            handlerFragment.startFetchForecastTask();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Hvis AsyncTask kjører må progressdialog vises:
+        if (handlerFragment.getFetchTaskStatus() == AsyncTask.Status.RUNNING) {
+            progressDialog.show();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        if (progressDialog != null) {
+            progressDialog.dismiss();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState (Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        /*
+        outState.putSerializable("session", sess);
+        outState.putInt("time_left", timeLeft);
+        */
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (progressDialog != null) {
+            progressDialog = null;
+        }
+
+        if (handlerFragment != null) {
+            handlerFragment = null;
+        }
+    }
+
+    public void addForecast(Forecast forecast) {
+        TextView out = (TextView) findViewById(R.id.textView);
+        out.setText("SUCCESS!");
+        progressDialog.dismiss();
     }
 
     @Override
