@@ -13,7 +13,6 @@ import java.net.URL;
 
 public class WeatherAPIHandlerFragment extends Fragment {
     public static final String WEATHER_URL = "http://api.yr.no/weatherapi/locationforecast/1.9/?lat=60.10;lon=9.58";
-    public static final String HTTP_ERROR = "HTTP ERROR";
     public static final int HTTP_OK = 200, HTTP_DEPRECATED = 203;
     public static final int READ_TIMEOUT = 10000, CONNECT_TIMEOUT = 15000;
 
@@ -47,17 +46,17 @@ public class WeatherAPIHandlerFragment extends Fragment {
         return fetchForeCastTask.getStatus();
     }
 
-    private class FetchForecastTask extends AsyncTask<Void, Void, String> {
+    private class FetchForecastTask extends AsyncTask<Void, Void, Forecast> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
         }
 
         @Override
-        protected String doInBackground(Void... params) {
+        protected Forecast doInBackground(Void... params) {
             URL url;
             HttpURLConnection connection = null;
-            String result = "";
+            Forecast result = null;
 
             try {
                 url = new URL(WEATHER_URL);
@@ -67,12 +66,10 @@ public class WeatherAPIHandlerFragment extends Fragment {
                 int responseCode = connection.getResponseCode();
 
                 if (responseCode == HTTP_OK || responseCode == HTTP_DEPRECATED) {
-                    result = readStreamToString(connection.getInputStream());
+                    XMLParser parser = new XMLParser();
+                    result = parser.parse(connection.getInputStream());
                 }
 
-                else {
-                    result = HTTP_ERROR;
-                }
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -87,13 +84,13 @@ public class WeatherAPIHandlerFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(String result) {
-            if (result.equals(HTTP_ERROR)) {
+        protected void onPostExecute(Forecast result) {
+            if (result == null) {
                 // Error result
             }
             else {
                 WeatherActivity activity = (WeatherActivity) getActivity();
-                activity.addForecast(new Forecast());
+                activity.addForecast(result);
             }
         }
     }
