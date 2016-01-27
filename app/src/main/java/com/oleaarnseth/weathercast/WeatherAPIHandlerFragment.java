@@ -3,6 +3,7 @@ package com.oleaarnseth.weathercast;
 import android.app.Fragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,7 +11,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
+import java.util.ArrayList;
+/*
+    WeatherAPIHandlerFragment er et hodeløst fragment som står for henting og behandling
+    av all data fra yr sitt WeatherAPI.
+ */
 public class WeatherAPIHandlerFragment extends Fragment {
     public static final String WEATHER_URL = "http://api.yr.no/weatherapi/locationforecast/1.9/?lat=60.10;lon=9.58";
     public static final int HTTP_OK = 200, HTTP_DEPRECATED = 203;
@@ -46,17 +51,17 @@ public class WeatherAPIHandlerFragment extends Fragment {
         return fetchForeCastTask.getStatus();
     }
 
-    private class FetchForecastTask extends AsyncTask<Void, Void, Forecast> {
+    private class FetchForecastTask extends AsyncTask<Void, Void, ArrayList<Forecast>> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
         }
 
         @Override
-        protected Forecast doInBackground(Void... params) {
+        protected ArrayList<Forecast> doInBackground(Void... params) {
             URL url;
             HttpURLConnection connection = null;
-            Forecast result = null;
+            ArrayList<Forecast> result = null;
 
             try {
                 url = new URL(WEATHER_URL);
@@ -84,7 +89,7 @@ public class WeatherAPIHandlerFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(Forecast result) {
+        protected void onPostExecute(ArrayList<Forecast> result) {
             if (result == null) {
                 // Error result
             }
@@ -93,33 +98,5 @@ public class WeatherAPIHandlerFragment extends Fragment {
                 activity.addForecast(result);
             }
         }
-    }
-
-    private String readStreamToString(InputStream in) {
-        BufferedReader reader = null;
-        StringBuilder builder = new StringBuilder();
-
-        try {
-            reader = new BufferedReader(new InputStreamReader(in));
-
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                builder.append(line);
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return builder.toString();
     }
 }

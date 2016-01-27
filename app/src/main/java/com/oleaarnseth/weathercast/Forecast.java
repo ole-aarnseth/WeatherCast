@@ -5,7 +5,7 @@ package com.oleaarnseth.weathercast;
  */
 public class Forecast {
     // XML-oppføringens tid lagres som String for enkelthetens skyld:
-    private String time;
+    private String timeFrom, timeTo;
 
     private double temperature, windspeed, precipitation;
 
@@ -13,18 +13,22 @@ public class Forecast {
            http://api.yr.no/weatherapi/weathericon/1.1/documentation */
     private int iconNumber;
 
-    public Forecast(String time, double temperature, double windspeed) {
-        this.time = time;
+    // Konstruktør
+    public Forecast(String timeFrom, String timeTo, double temperature, double windspeed, double precipitation, int iconNumber) {
+        this.timeFrom = timeFrom;
+        this.timeTo = timeTo;
         this.temperature = temperature;
         this.windspeed = windspeed;
-
-        precipitation = 0.0;
-        iconNumber = -1;
+        this.precipitation = precipitation;
+        this.iconNumber = iconNumber;
     }
 
-    public String getTime() {
-        return time;
+
+    public String getTimeFrom() {
+        return timeFrom;
     }
+
+    public String getTimeTo() { return timeTo; }
 
     public void setPrecipitation(double precipitation) {
         this.precipitation = precipitation;
@@ -36,5 +40,20 @@ public class Forecast {
 
     public int getIconNumber() {
         return iconNumber;
+    }
+
+    public String toString() {
+        return "Time from: "
+                + timeFrom
+                + "\nTime to: "
+                + timeTo
+                + "\nTemperature: "
+                + temperature
+                + "\nWindspeed: "
+                + windspeed
+                + "\nPrecipitation: "
+                + precipitation
+                + "\n Icon number: "
+                + iconNumber;
     }
 }

@@ -1,5 +1,6 @@
 package com.oleaarnseth.weathercast;
 
+import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -7,29 +8,32 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
-/*
-Parser-klasse som parser all XML-data fra WeatherAPI.
- */
+
+// Parser-klasse som parser all XML-data fra WeatherAPI.
+
 public class XMLParser {
     public static final String NAMESPACE = null;
 
     // Start-tag for XML-data:
     public static final String START_TAG_WEATHERDATA = "weatherdata";
 
-    // Alle værvarselsoppføringer starter med en "time"-tag:
+    public static final String TAG_PRODUCT = "product";
     public static final String TAG_FORECAST = "time";
-
-    // "to"-attributt for time-elementet:
-    public static final String ATTRIBUTE_TIME_TO = "to";
-
     public static final String TAG_TEMPERATURE = "temperature";
     public static final String TAG_WINDSPEED = "windSpeed";
+    public static final String TAG_PRECIPITATION = "precipitation";
+    public static final String TAG_SYMBOL = "symbol";
 
+    public static final String ATTRIBUTE_TIME_FROM = "from";
+    public static final String ATTRIBUTE_TIME_TO = "to";
     public static final String ATTRIBUTE_TEMPERATURE = "value";
     public static final String ATTRIBUTE_WINDSPEED = "mps";
+    public static final String ATTRIBUTE_PRECIPITATION_VALUE = "value";
+    public static final String ATTRIBUTE_SYMBOL_NUMBER = "number";
 
-    public Forecast parse(InputStream in) throws XmlPullParserException, IOException {
+    public ArrayList<Forecast> parse(InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -43,50 +47,62 @@ public class XMLParser {
         }
     }
 
-    private Forecast readXmlFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
-        Forecast forecast = null;
+    private ArrayList<Forecast> readXmlFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, START_TAG_WEATHERDATA);
+/*
+        // Flytt parser til "product"-tag:
+        while (parser.getEventType() != XmlPullParser.START_TAG && !parser.getName().equals(TAG_PRODUCT)) {
+            parser.next();
+            Log.d("debug", "advancing");
+        }*/
 
-        while (parser.next() != XmlPullParser.END_TAG) {
+        ArrayList<Forecast> forecasts = new ArrayList<Forecast>();
+
+        while (parser.next() != XmlPullParser.END_DOCUMENT) {
+            Log.d("debug", "Surface loop");
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
             }
 
             String name = parser.getName();
+
             if (name.equals(TAG_FORECAST)) {
-
-                // Les inn ny forecast
-                if (forecast == null) {
-                    forecast = readForecast(parser);
-                }
-
-                /* Etter at værvarselet har blitt lest inn vil neste "time"-tag
-                   i XML-feeden inneholde nedbør (precipitation) og værikon for
-                   gjeldende tidsrom: */
-                else if (parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TIME_TO).equals(forecast.getTime())) {
-                    readExtras(parser, forecast);
-                }
+                forecasts.add(readForecast(parser));
             }
-
-            // Avbryt løkke når forecast-objektet er komplettert fra XML-data:
-            if (forecast != null && forecast.getIconNumber() != -1) {
-                break;
-            }
+            /*else {
+                skip(parser);
+            }*/
         }
 
-        return forecast;
+        return forecasts;
     }
 
     private Forecast readForecast(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_FORECAST);
 
-        String time = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TIME_TO);
-        double temperature = 0.0;
-        double windspeed = 0.0;
+        String timeFrom = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TIME_FROM);
+        String timeTo = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TIME_TO);
 
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
+        double temperature = Double.MIN_VALUE;
+        double windspeed = Double.MIN_VALUE;
+        double precipitation = Double.MIN_VALUE;
+        int iconNumber = -1;
+
+        int depth = 1;
+
+        while (depth > 0) {
+            Log.d("debug", "Readforecast loop");
+
+            int event = parser.next();
+
+            if (event != XmlPullParser.START_TAG) {
+                if (event == XmlPullParser.END_TAG) {
+                    depth--;
+                }
                 continue;
+            }
+            else {
+                depth++;
             }
 
             String name = parser.getName();
@@ -97,23 +113,27 @@ public class XMLParser {
             else if (name.equals(TAG_WINDSPEED)) {
                 windspeed = readWindSpeed(parser);
             }
-            else {
-                skip(parser);
+            else if (name.equals(TAG_PRECIPITATION)) {
+                precipitation = readPrecipitation(parser);
+            }
+            else if (name.equals(TAG_SYMBOL)) {
+                iconNumber = readIconNumber(parser);
             }
         }
 
-        return new Forecast(time, temperature, windspeed);
+        return new Forecast(timeFrom, timeTo, temperature, windspeed, precipitation, iconNumber);
     }
 
     private double readTemperature(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_TEMPERATURE);
 
         String temperatureStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TEMPERATURE);
-        // If this goes wrong add Double.parseDouble(temperatureStr.substring(1, temperatureStr.length() - 1));
-        double temperature = Double.parseDouble(temperatureStr);
-        parser.nextTag();
 
-        parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_TEMPERATURE);
+        double temperature = Double.parseDouble(temperatureStr);
+        //double temperature = Double.parseDouble(temperatureStr.substring(1, temperatureStr.length() - 1));
+        //parser.nextTag();
+
+        //parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_TEMPERATURE);
         return temperature;
     }
 
@@ -121,11 +141,12 @@ public class XMLParser {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_WINDSPEED);
 
         String windspeedStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_WINDSPEED);
-        // If this goes wrong add Double.parseDouble(windspeedStr.substring(1, windspeedStr.length() - 1));
-        double windspeed = Double.parseDouble(windspeedStr);
-        parser.nextTag();
 
-        parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_WINDSPEED);
+        double windspeed = Double.parseDouble(windspeedStr);
+        //double windspeed = Double.parseDouble(windspeedStr.substring(1, windspeedStr.length() - 1));
+        //parser.nextTag();
+
+        //parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_WINDSPEED);
         return windspeed;
     }
 
@@ -137,6 +158,7 @@ public class XMLParser {
         int depth = 1;
 
         while (depth > 0) {
+            Log.d("debug", "skip-loop iterating.");
             int event = parser.next();
 
             if (event == XmlPullParser.END_TAG) {
@@ -148,12 +170,28 @@ public class XMLParser {
         }
     }
 
-    private void readExtras(XmlPullParser parser, Forecast forecast) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_FORECAST);
+    private double readPrecipitation(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_PRECIPITATION);
 
-        if (!parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TIME_TO).equals(forecast.getTime())) {
-            throw new IllegalStateException("Forecast time does not match time for selected entry!");
-        }
+        String precipitationStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_PRECIPITATION_VALUE);
 
+        double precipitation = Double.parseDouble(precipitationStr);
+        //double precipitation = Double.parseDouble(precipitationStr.substring(1, precipitationStr.length() - 1));
+        //parser.nextTag();
+
+        //parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_PRECIPITATION);
+        return precipitation;
+    }
+
+    private int readIconNumber(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_SYMBOL);
+
+        String iconNumberStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_SYMBOL_NUMBER);
+        int iconNumber = Integer.parseInt(iconNumberStr);
+        //int iconNumber = Integer.parseInt(iconNumberStr.substring(1, iconNumberStr.length() - 1));
+        //parser.nextTag();
+
+        //parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_SYMBOL);
+        return iconNumber;
     }
 }

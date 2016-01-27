@@ -8,10 +8,13 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 public class WeatherActivity extends AppCompatActivity {
     // String-tag som identifiserer handlerfragmentet i fragmentmanager:
@@ -100,9 +103,9 @@ public class WeatherActivity extends AppCompatActivity {
         }
     }
 
-    public void addForecast(Forecast forecast) {
+    public void addForecast(ArrayList<Forecast> forecasts) {
         TextView out = (TextView) findViewById(R.id.textView);
-        out.setText("SUCCESS!");
+        out.setText(forecasts.get(1).toString());
         progressDialog.dismiss();
     }
 
