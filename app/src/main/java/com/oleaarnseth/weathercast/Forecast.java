@@ -1,11 +1,18 @@
 package com.oleaarnseth.weathercast;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Denne klassen rommer værvarsel-data for et gjeldende tidsrom.
  */
 public class Forecast {
     // XML-oppføringens tid lagres som String for enkelthetens skyld:
     private String timeFrom, timeTo;
+
+    // Dato som vises i Spinner i WeatherActivity:
+    private String displayDate;
 
     private double temperature, windspeed, precipitation;
 
@@ -21,14 +28,15 @@ public class Forecast {
         this.windspeed = windspeed;
         this.precipitation = precipitation;
         this.iconNumber = iconNumber;
+        displayDate = "";
     }
 
 
-    public String getTimeFrom() {
-        return timeFrom;
-    }
+    public String getTimeFrom() { return timeFrom; }
 
     public String getTimeTo() { return timeTo; }
+
+    public void setDisplayDate(String displayDate) { this.displayDate = displayDate; }
 
     public void setPrecipitation(double precipitation) {
         this.precipitation = precipitation;
@@ -37,6 +45,8 @@ public class Forecast {
     public void setIconNumber(int iconNumber) {
         this.iconNumber = iconNumber;
     }
+
+    public double getPrecipitation() { return precipitation; }
 
     public int getIconNumber() {
         return iconNumber;
@@ -53,7 +63,9 @@ public class Forecast {
                 + windspeed
                 + "\nPrecipitation: "
                 + precipitation
-                + "\n Icon number: "
-                + iconNumber;
+                + "\nIcon number: "
+                + iconNumber
+                + "\nDisplay date: "
+                + displayDate;
     }
 }

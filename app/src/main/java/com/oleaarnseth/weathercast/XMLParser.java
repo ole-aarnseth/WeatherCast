@@ -49,17 +49,9 @@ public class XMLParser {
 
     private ArrayList<Forecast> readXmlFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, START_TAG_WEATHERDATA);
-/*
-        // Flytt parser til "product"-tag:
-        while (parser.getEventType() != XmlPullParser.START_TAG && !parser.getName().equals(TAG_PRODUCT)) {
-            parser.next();
-            Log.d("debug", "advancing");
-        }*/
-
         ArrayList<Forecast> forecasts = new ArrayList<Forecast>();
 
         while (parser.next() != XmlPullParser.END_DOCUMENT) {
-            Log.d("debug", "Surface loop");
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
             }
@@ -69,9 +61,6 @@ public class XMLParser {
             if (name.equals(TAG_FORECAST)) {
                 forecasts.add(readForecast(parser));
             }
-            /*else {
-                skip(parser);
-            }*/
         }
 
         return forecasts;
@@ -91,8 +80,6 @@ public class XMLParser {
         int depth = 1;
 
         while (depth > 0) {
-            Log.d("debug", "Readforecast loop");
-
             int event = parser.next();
 
             if (event != XmlPullParser.START_TAG) {
@@ -130,10 +117,7 @@ public class XMLParser {
         String temperatureStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TEMPERATURE);
 
         double temperature = Double.parseDouble(temperatureStr);
-        //double temperature = Double.parseDouble(temperatureStr.substring(1, temperatureStr.length() - 1));
-        //parser.nextTag();
 
-        //parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_TEMPERATURE);
         return temperature;
     }
 
@@ -143,10 +127,7 @@ public class XMLParser {
         String windspeedStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_WINDSPEED);
 
         double windspeed = Double.parseDouble(windspeedStr);
-        //double windspeed = Double.parseDouble(windspeedStr.substring(1, windspeedStr.length() - 1));
-        //parser.nextTag();
 
-        //parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_WINDSPEED);
         return windspeed;
     }
 
@@ -158,7 +139,6 @@ public class XMLParser {
         int depth = 1;
 
         while (depth > 0) {
-            Log.d("debug", "skip-loop iterating.");
             int event = parser.next();
 
             if (event == XmlPullParser.END_TAG) {
@@ -176,10 +156,7 @@ public class XMLParser {
         String precipitationStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_PRECIPITATION_VALUE);
 
         double precipitation = Double.parseDouble(precipitationStr);
-        //double precipitation = Double.parseDouble(precipitationStr.substring(1, precipitationStr.length() - 1));
-        //parser.nextTag();
 
-        //parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_PRECIPITATION);
         return precipitation;
     }
 
@@ -188,10 +165,7 @@ public class XMLParser {
 
         String iconNumberStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_SYMBOL_NUMBER);
         int iconNumber = Integer.parseInt(iconNumberStr);
-        //int iconNumber = Integer.parseInt(iconNumberStr.substring(1, iconNumberStr.length() - 1));
-        //parser.nextTag();
 
-        //parser.require(XmlPullParser.END_TAG, NAMESPACE, TAG_SYMBOL);
         return iconNumber;
     }
 }

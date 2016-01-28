@@ -103,9 +103,9 @@ public class WeatherActivity extends AppCompatActivity {
         }
     }
 
-    public void addForecast(ArrayList<Forecast> forecasts) {
+    public void addForecast(Forecast[] forecasts) {
         TextView out = (TextView) findViewById(R.id.textView);
-        out.setText(forecasts.get(1).toString());
+        out.setText(forecasts[0].toString());
         progressDialog.dismiss();
     }
 
