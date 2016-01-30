@@ -9,6 +9,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 
 // Parser-klasse som parser all XML-data fra WeatherAPI.
@@ -19,7 +20,6 @@ public class XMLParser {
     // Start-tag for XML-data:
     public static final String START_TAG_WEATHERDATA = "weatherdata";
 
-    public static final String TAG_PRODUCT = "product";
     public static final String TAG_FORECAST = "time";
     public static final String TAG_TEMPERATURE = "temperature";
     public static final String TAG_WINDSPEED = "windSpeed";
@@ -33,7 +33,8 @@ public class XMLParser {
     public static final String ATTRIBUTE_PRECIPITATION_VALUE = "value";
     public static final String ATTRIBUTE_SYMBOL_NUMBER = "number";
 
-    public ArrayList<Forecast> parse(InputStream in) throws XmlPullParserException, IOException {
+    // Her starter parseren, som videre kaller alle private hjelpemetoder under:
+    public LinkedList<Forecast> parse(InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -47,9 +48,9 @@ public class XMLParser {
         }
     }
 
-    private ArrayList<Forecast> readXmlFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private LinkedList<Forecast> readXmlFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, START_TAG_WEATHERDATA);
-        ArrayList<Forecast> forecasts = new ArrayList<Forecast>();
+        LinkedList<Forecast> forecasts = new LinkedList<Forecast>();
 
         while (parser.next() != XmlPullParser.END_DOCUMENT) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {

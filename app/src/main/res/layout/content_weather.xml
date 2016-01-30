@@ -13,6 +13,14 @@
     tools:showIn="@layout/activity_weather"
     android:orientation="vertical">
 
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:id="@+id/weatherIcon"
+        android:layout_gravity="center_horizontal"
+        android:contentDescription="image/png"
+        tools:ignore="HardcodedText" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -20,4 +28,5 @@
         android:text="Large Text"
         android:id="@+id/textView"
         android:layout_gravity="center_horizontal" />
+
 </LinearLayout>

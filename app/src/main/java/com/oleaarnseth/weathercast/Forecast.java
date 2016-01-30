@@ -1,8 +1,8 @@
 package com.oleaarnseth.weathercast;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import android.graphics.Bitmap;
+
+import java.io.File;
 
 /**
  * Denne klassen rommer værvarsel-data for et gjeldende tidsrom.
@@ -20,6 +20,9 @@ public class Forecast {
            http://api.yr.no/weatherapi/weathericon/1.1/documentation */
     private int iconNumber;
 
+    // Værvarselsikon fra yr sitt WeatherAPI, avledes fra "iconNumber":
+    private File weatherIcon;
+
     // Konstruktør
     public Forecast(String timeFrom, String timeTo, double temperature, double windspeed, double precipitation, int iconNumber) {
         this.timeFrom = timeFrom;
@@ -29,6 +32,7 @@ public class Forecast {
         this.precipitation = precipitation;
         this.iconNumber = iconNumber;
         displayDate = "";
+        weatherIcon = null;
     }
 
 
@@ -50,6 +54,15 @@ public class Forecast {
 
     public int getIconNumber() {
         return iconNumber;
+    }
+
+    public void setWeatherIcon(File weatherIcon) { this.weatherIcon = weatherIcon; }
+
+    public File getWeatherIcon() { return weatherIcon; }
+
+    public Bitmap getWeatherIconBitmap() {
+        FileHandler fh = new FileHandler();
+        return fh.readIconFromFile(weatherIcon);
     }
 
     public String toString() {

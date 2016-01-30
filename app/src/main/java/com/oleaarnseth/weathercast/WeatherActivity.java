@@ -6,15 +6,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
-
-import java.util.ArrayList;
 
 public class WeatherActivity extends AppCompatActivity {
     // String-tag som identifiserer handlerfragmentet i fragmentmanager:
@@ -22,6 +21,7 @@ public class WeatherActivity extends AppCompatActivity {
 
     private ProgressDialog progressDialog;
     private WeatherAPIHandlerFragment handlerFragment;
+    private ImageView forecastIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +55,12 @@ public class WeatherActivity extends AppCompatActivity {
         progressDialog.setCanceledOnTouchOutside(false);
         progressDialog.setCancelable(false);
 
+        // Sett opp værikon:
+        forecastIcon = (ImageView) findViewById(R.id.weatherIcon);
+
         // Hvis dette er første gangen aktiviteten kjører må FetchTask-en startes:
         if (savedInstanceState == null) {
-            handlerFragment.startFetchForecastTask();
+            handlerFragment.startFetchForecastTask(new Location(60.10, 9.58));
         }
     }
 
@@ -106,6 +109,8 @@ public class WeatherActivity extends AppCompatActivity {
     public void addForecast(Forecast[] forecasts) {
         TextView out = (TextView) findViewById(R.id.textView);
         out.setText(forecasts[0].toString());
+        FileHandler fh = new FileHandler();
+        forecastIcon.setImageBitmap(forecasts[0].getWeatherIconBitmap());
         progressDialog.dismiss();
     }
 
