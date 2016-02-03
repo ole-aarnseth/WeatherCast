@@ -5,11 +5,11 @@ package com.oleaarnseth.weathercast;
     og gis som parameter til AsyncTasken i WeatherAPIHandlerFragment når den sender http-request
     til WeatherAPI:
  */
-public class Location {
+public class ForecastLocation {
     private double lat, lon;
 
     // Konstruktør:
-    public Location(double lat, double lon) {
+    public ForecastLocation(double lat, double lon) {
         this.lat = lat;
         this.lon = lon;
     }
@@ -17,4 +17,12 @@ public class Location {
     public double getLat() { return lat; }
 
     public double getLon() { return lon; }
+
+    @Override
+    public String toString() {
+        return "Latitude: "
+                + lat
+                + "\nLongitutde: "
+                + lon;
+    }
 }

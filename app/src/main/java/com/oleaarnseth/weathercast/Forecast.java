@@ -65,6 +65,7 @@ public class Forecast {
         return fh.readIconFromFile(weatherIcon);
     }
 
+    @Override
     public String toString() {
         return "Time from: "
                 + timeFrom

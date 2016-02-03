@@ -5,12 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -62,7 +59,7 @@ public class WeatherAPIHandlerFragment extends Fragment {
     }
 
     // Starter AsyncTask i hodeløst fragment, kalles fra WeatherActivity:
-    public void startFetchForecastTask(Location location) {
+    public void startFetchForecastTask(ForecastLocation location) {
         if (fetchForeCastTask.getStatus() == AsyncTask.Status.RUNNING) {
             return;
         }
@@ -78,14 +75,14 @@ public class WeatherAPIHandlerFragment extends Fragment {
         return fetchForeCastTask.getStatus();
     }
 
-    private class FetchForecastTask extends AsyncTask<Location, Void, Forecast[]> {
+    private class FetchForecastTask extends AsyncTask<ForecastLocation, Void, Forecast[]> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
         }
 
         @Override
-        protected Forecast[] doInBackground(Location... params) {
+        protected Forecast[] doInBackground(ForecastLocation... params) {
             URL url;
             HttpURLConnection connection = null;
             LinkedList<Forecast> rawData = null;

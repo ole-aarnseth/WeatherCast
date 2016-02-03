@@ -1,23 +1,47 @@
 package com.oleaarnseth.weathercast;
 
+import android.Manifest;
 import android.app.FragmentManager;
 import android.app.ProgressDialog;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class WeatherActivity extends AppCompatActivity {
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+
+/*************************************************************************************************
+ Dette er hovedaktiviteten for appen, som henter lokasjon gjennom GoogleAPIClient og deretter
+ laster ned værdata fra WeatherAPI gjennom WeatherAPIHandlerFragment. Så vises værvarsler fra
+ forecasts-arrayen i en enkel GUI.
+ *************************************************************************************************/
+
+public class WeatherActivity extends AppCompatActivity implements
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     // String-tag som identifiserer handlerfragmentet i fragmentmanager:
     public static final String HANDLER_FRAGMENT_TAG = "weatherapi_handler_fragment";
+
+    public static final String ACTIVITY_TAG = "WeatherActivity";
+
+    // Værvarsler og sted:
+    private Forecast[] forecasts;
+    private ForecastLocation location;
+
+    // Google API client:
+    private GoogleApiClient googleApiClient;
 
     private ProgressDialog progressDialog;
     private WeatherAPIHandlerFragment handlerFragment;
@@ -50,17 +74,44 @@ public class WeatherActivity extends AppCompatActivity {
 
         // ProgressDialog som vises mens AsyncTask-en kjører:
         progressDialog = new ProgressDialog(this);
-        progressDialog.setTitle(getResources().getString(R.string.progressdialog_hdr));
-        progressDialog.setMessage(getResources().getString(R.string.progressdialog_text));
+        progressDialog.setTitle(getString(R.string.progressdialog_hdr));
+        progressDialog.setMessage(getString(R.string.progressdialog_text));
         progressDialog.setCanceledOnTouchOutside(false);
         progressDialog.setCancelable(false);
 
         // Sett opp værikon:
         forecastIcon = (ImageView) findViewById(R.id.weatherIcon);
 
-        // Hvis dette er første gangen aktiviteten kjører må FetchTask-en startes:
+        // Konstruer GoogleApiClient:
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+
+        // Hvis dette er første gangen aktiviteten kjører må FetchTasken startes:
         if (savedInstanceState == null) {
-            handlerFragment.startFetchForecastTask(new Location(60.10, 9.58));
+            if (location == null) {
+
+            }
+            //handlerFragment.startFetchForecastTask(new ForecastLocation(60.10, 9.58));
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.i(ACTIVITY_TAG, "Connecting GoogleAPI...");
+        googleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (googleApiClient.isConnected()) {
+            googleApiClient.disconnect();
         }
     }
 
@@ -84,7 +135,7 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState (Bundle outState) {
+    protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
         /*
@@ -97,16 +148,15 @@ public class WeatherActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        if (progressDialog != null) {
-            progressDialog = null;
-        }
-
-        if (handlerFragment != null) {
-            handlerFragment = null;
-        }
+        progressDialog = null;
+        handlerFragment = null;
+        forecasts = null;
+        location = null;
+        googleApiClient = null;
     }
 
     public void addForecast(Forecast[] forecasts) {
+        this.forecasts = forecasts;
         TextView out = (TextView) findViewById(R.id.textView);
         out.setText(forecasts[0].toString());
         FileHandler fh = new FileHandler();
@@ -134,5 +184,48 @@ public class WeatherActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /***************************************
+     **** Overrides for GoogleApiClient ****
+     ***************************************/
+    @Override
+    public void onConnected(Bundle bundle) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e(ACTIVITY_TAG, "Error, insufficient permissions!");
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        if (location != null) {
+            Log.i(ACTIVITY_TAG, "Fetching location...");
+            Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+            if (lastLocation != null) {
+                Log.i(ACTIVITY_TAG, "Success, got location.");
+                location = new ForecastLocation(lastLocation.getLatitude(), lastLocation.getLongitude());
+                TextView out = (TextView) findViewById(R.id.textView);
+                out.setText(location.toString());
+            }
+            else {
+                // Error Dialog
+            }
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.i(ACTIVITY_TAG, "Connection suspended.");
+        googleApiClient.connect();
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.i(ACTIVITY_TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
     }
 }
