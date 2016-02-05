@@ -186,11 +186,13 @@ public class WeatherActivity extends AppCompatActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-    /***************************************
-     **** Overrides for GoogleApiClient ****
-     ***************************************/
-    @Override
-    public void onConnected(Bundle bundle) {
+    // Henter lokasjonsdata, skal kun kalles når GoogleApiClient er oppkoblet:
+    private void fetchLocation() {
+        if (googleApiClient == null || handlerFragment == null || !googleApiClient.isConnected()) {
+            return;
+        }
+
+        // Sjekk om Android-enheten har riktige innstillinger for henting av lokasjonsdata:
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.e(ACTIVITY_TAG, "Error, insufficient permissions!");
@@ -203,19 +205,31 @@ public class WeatherActivity extends AppCompatActivity implements
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        if (location != null) {
-            Log.i(ACTIVITY_TAG, "Fetching location...");
-            Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-            if (lastLocation != null) {
-                Log.i(ACTIVITY_TAG, "Success, got location.");
-                location = new ForecastLocation(lastLocation.getLatitude(), lastLocation.getLongitude());
-                TextView out = (TextView) findViewById(R.id.textView);
-                out.setText(location.toString());
+
+        if (forecasts == null) {
+            if (location == null) {
+                Log.i(ACTIVITY_TAG, "Fetching location...");
+                Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+                if (lastLocation != null) {
+                    location = new ForecastLocation(lastLocation.getLatitude(), lastLocation.getLongitude());
+                }
+                else {
+                    // Error Dialog
+                    return;
+                }
             }
-            else {
-                // Error Dialog
-            }
+
+            // Starter AsyncTask som henter værvarsel til gjeldende lokasjon:
+            handlerFragment.startFetchForecastTask(location);
         }
+    }
+
+    /***************************************
+     **** Overrides for GoogleApiClient ****
+     ***************************************/
+    @Override
+    public void onConnected(Bundle bundle) {
+        fetchLocation();
     }
 
     @Override
