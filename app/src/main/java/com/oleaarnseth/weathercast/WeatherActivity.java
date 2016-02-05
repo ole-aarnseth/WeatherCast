@@ -36,9 +36,12 @@ public class WeatherActivity extends AppCompatActivity implements
 
     public static final String ACTIVITY_TAG = "WeatherActivity";
 
+    public static final int REQUEST_PERMISSION_ACCESS_COARSE_LOCATION = 1;
+
     // Værvarsler og sted:
     private Forecast[] forecasts;
-    private ForecastLocation location;
+    private Location location;
+    private String locality;
 
     // Google API client:
     private GoogleApiClient googleApiClient;
@@ -91,12 +94,9 @@ public class WeatherActivity extends AppCompatActivity implements
                     .build();
         }
 
-        // Hvis dette er første gangen aktiviteten kjører må FetchTasken startes:
+        // Hvis dette er første gangen aktiviteten kjører:
         if (savedInstanceState == null) {
-            if (location == null) {
 
-            }
-            //handlerFragment.startFetchForecastTask(new ForecastLocation(60.10, 9.58));
         }
     }
 
@@ -120,7 +120,8 @@ public class WeatherActivity extends AppCompatActivity implements
         super.onResume();
 
         // Hvis AsyncTask kjører må progressdialog vises:
-        if (handlerFragment.getFetchTaskStatus() == AsyncTask.Status.RUNNING) {
+        if (handlerFragment.getFetchForecastTaskStatus() == AsyncTask.Status.RUNNING
+                || handlerFragment.getFetchLocalityStatus() == AsyncTask.Status.RUNNING) {
             progressDialog.show();
         }
     }
@@ -155,13 +156,34 @@ public class WeatherActivity extends AppCompatActivity implements
         googleApiClient = null;
     }
 
-    public void addForecast(Forecast[] forecasts) {
+    // Callback fra WeatherAPIHandlerFragment setter værvarsler:
+    public void setForecasts(Forecast[] forecasts) {
         this.forecasts = forecasts;
-        TextView out = (TextView) findViewById(R.id.textView);
-        out.setText(forecasts[0].toString());
-        FileHandler fh = new FileHandler();
         forecastIcon.setImageBitmap(forecasts[0].getWeatherIconBitmap());
-        progressDialog.dismiss();
+
+        // Avslutt progressdialog hvis andre AsyncTask ikke kjører:
+        if (handlerFragment.getFetchLocalityStatus() != AsyncTask.Status.RUNNING) {
+            progressDialog.dismiss();
+        }
+    }
+
+    // Callback fra WeatherAPIHandlerFragment setter locality (by):
+    public void setLocality(String locality) {
+        // AsyncTasken returnerer "" hvis den ikke fant by:
+        if (locality != "") {
+            this.locality = locality;
+        }
+        else {
+            this.locality = getResources().getString(R.string.unknown_locale);
+        }
+
+        TextView localityDisplay = (TextView) findViewById(R.id.textView);
+        localityDisplay.setText(locality);
+
+        // Avslutt progressdialog hvis andre AsyncTask ikke kjører:
+        if (handlerFragment.getFetchForecastTaskStatus() != AsyncTask.Status.RUNNING) {
+            progressDialog.dismiss();
+        }
     }
 
     @Override
@@ -192,17 +214,11 @@ public class WeatherActivity extends AppCompatActivity implements
             return;
         }
 
-        // Sjekk om Android-enheten har riktige innstillinger for henting av lokasjonsdata:
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.e(ACTIVITY_TAG, "Error, insufficient permissions!");
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+        // Sjekk om Android-enheten har permission for henting av lokasjonsdata:
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.i(ACTIVITY_TAG, "Request permission ACCESS_COARSE_LOCATION.");
+            ActivityCompat.requestPermissions(this, new String[]{ Manifest.permission.ACCESS_COARSE_LOCATION }, REQUEST_PERMISSION_ACCESS_COARSE_LOCATION);
+
             return;
         }
 
@@ -211,16 +227,32 @@ public class WeatherActivity extends AppCompatActivity implements
                 Log.i(ACTIVITY_TAG, "Fetching location...");
                 Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
                 if (lastLocation != null) {
-                    location = new ForecastLocation(lastLocation.getLatitude(), lastLocation.getLongitude());
+                    location = lastLocation;
                 }
                 else {
-                    // Error Dialog
+                    // Display error dialog
                     return;
                 }
             }
 
             // Starter AsyncTask som henter værvarsel til gjeldende lokasjon:
-            handlerFragment.startFetchForecastTask(location);
+            handlerFragment.setLocation(location);
+            progressDialog.show();
+            handlerFragment.startFetchForecastTask();
+        }
+    }
+
+    // Callback når brukeren har angitt om appen får nødvendige permissions:
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (requestCode == REQUEST_PERMISSION_ACCESS_COARSE_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, kjør fetchLocation() på nytt:
+                fetchLocation();
+            }
+            else {
+                // Permission denied, vis feilmelding:
+            }
         }
     }
 
@@ -229,6 +261,7 @@ public class WeatherActivity extends AppCompatActivity implements
      ***************************************/
     @Override
     public void onConnected(Bundle bundle) {
+        // Hent lokasjon når den er oppkoblet:
         fetchLocation();
     }
 

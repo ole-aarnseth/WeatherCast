@@ -3,8 +3,12 @@ package com.oleaarnseth.weathercast;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,12 +19,16 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
 /*
     WeatherAPIHandlerFragment er et hodeløst fragment som står for henting og behandling
     av all data fra yr sitt WeatherAPI.
  */
 public class WeatherAPIHandlerFragment extends Fragment {
+    public static final String TAG_FRAGMENT = "WeatherAPIHandler";
+
     public static final String WEATHER_URL = "http://api.yr.no/weatherapi/locationforecast/";
     public static final String WEATHER_VERSION = "1.9";
     public static final String WEATHER_ATTRIBUTE_LAT = "/?lat=";
@@ -45,11 +53,17 @@ public class WeatherAPIHandlerFragment extends Fragment {
     public static final String XML_DATE_STRING_END = "T12:00:00Z";
 
     private FetchForecastTask fetchForeCastTask = new FetchForecastTask();
+    private FetchLocalityTask fetchLocalityTask = new FetchLocalityTask();
+
+    // Lokasjon som værvarsel skal hentes for:
+    private Location location;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
+
+    public void setLocation(Location location) { this.location = location; }
 
     public static WeatherAPIHandlerFragment newInstance() {
         WeatherAPIHandlerFragment fragment = new WeatherAPIHandlerFragment();
@@ -59,8 +73,8 @@ public class WeatherAPIHandlerFragment extends Fragment {
     }
 
     // Starter AsyncTask i hodeløst fragment, kalles fra WeatherActivity:
-    public void startFetchForecastTask(ForecastLocation location) {
-        if (fetchForeCastTask.getStatus() == AsyncTask.Status.RUNNING) {
+    public void startFetchForecastTask() {
+        if (location == null || fetchForeCastTask.getStatus() == AsyncTask.Status.RUNNING) {
             return;
         }
 
@@ -71,18 +85,15 @@ public class WeatherAPIHandlerFragment extends Fragment {
         fetchForeCastTask.execute(location);
     }
 
-    public AsyncTask.Status getFetchTaskStatus() {
+    public AsyncTask.Status getFetchForecastTaskStatus() {
         return fetchForeCastTask.getStatus();
     }
 
-    private class FetchForecastTask extends AsyncTask<ForecastLocation, Void, Forecast[]> {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
+    public AsyncTask.Status getFetchLocalityStatus() { return fetchLocalityTask.getStatus(); }
 
+    private class FetchForecastTask extends AsyncTask<Location, Void, Forecast[]> {
         @Override
-        protected Forecast[] doInBackground(ForecastLocation... params) {
+        protected Forecast[] doInBackground(Location... params) {
             URL url;
             HttpURLConnection connection = null;
             LinkedList<Forecast> rawData = null;
@@ -91,9 +102,9 @@ public class WeatherAPIHandlerFragment extends Fragment {
                 url = new URL(WEATHER_URL
                         + WEATHER_VERSION
                         + WEATHER_ATTRIBUTE_LAT
-                        + params[0].getLat()
+                        + params[0].getLatitude()
                         + WEATHER_ATTRIBUTE_LON
-                        + params[0].getLon());
+                        + params[0].getLongitude());
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setReadTimeout(READ_TIMEOUT);
                 connection.setConnectTimeout(CONNECT_TIMEOUT);
@@ -127,7 +138,53 @@ public class WeatherAPIHandlerFragment extends Fragment {
         protected void onPostExecute(Forecast[] result) {
             // Hvis result == null har det skjedd en feil, og feildialog vises i WeatherActivity:
             WeatherActivity activity = (WeatherActivity) getActivity();
-            activity.addForecast(result);
+            activity.setForecasts(result);
+            startFetchLocalityTask();
+        }
+    }
+
+    private void startFetchLocalityTask() {
+        if (location == null || fetchLocalityTask.getStatus() == AsyncTask.Status.RUNNING) {
+            return;
+        }
+
+        if (fetchLocalityTask.getStatus() == AsyncTask.Status.FINISHED) {
+            fetchLocalityTask = new FetchLocalityTask();
+        }
+
+        fetchLocalityTask.execute(location);
+    }
+
+    private class FetchLocalityTask extends AsyncTask<Location, Void, String> {
+        @Override
+        protected String doInBackground(Location... params) {
+            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+            List<Address> addresses = null;
+
+            // Utfør reverse geocoding og lever resultat:
+            try {
+                addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+            }
+            catch (IOException e) {
+                Log.wtf(TAG_FRAGMENT, "IOExcpetion when reverse geocoding.");
+            }
+            catch (IllegalArgumentException e) {
+                Log.wtf(TAG_FRAGMENT, "IllegalArgumentException when reverse geocoding.");
+            }
+
+            // Sjekk at adresse ble funnet:
+            if (addresses == null || addresses.size() == 0) {
+                return "";
+            }
+
+            Address address = addresses.get(0);
+            return address.getLocality();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            WeatherActivity activity = (WeatherActivity) getActivity();
+            activity.setLocality(result);
         }
     }
 
