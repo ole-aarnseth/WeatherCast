@@ -70,7 +70,7 @@ public class FileHandler {
     }
 
     // Les ikon fra fil:
-    public Bitmap readIconFromFile(File file) {
+    public Bitmap readIconBitmapFromFile(File file) {
         if (file != null && file.exists()) {
             return BitmapFactory.decodeFile(file.getAbsolutePath());
         }

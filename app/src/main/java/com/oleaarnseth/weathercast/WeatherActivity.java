@@ -16,12 +16,13 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+
+import java.util.ArrayList;
 
 /*************************************************************************************************
  Dette er hovedaktiviteten for appen, som henter lokasjon gjennom GoogleAPIClient og deretter
@@ -38,17 +39,25 @@ public class WeatherActivity extends AppCompatActivity implements
 
     public static final int REQUEST_PERMISSION_ACCESS_COARSE_LOCATION = 1;
 
+    // Bundle-tagger:
+    public static final String BUNDLE_TAG_FORECASTS = "forecasts",
+            BUNDLE_TAG_LOCATION = "location",
+            BUNDLE_TAG_LOCALITY = "locality";
+
     // Værvarsler og sted:
     private Forecast[] forecasts;
     private Location location;
     private String locality;
+
+    // Liste med ForecastFragmenter:
+    private ArrayList<ForecastFragment> forecastFragments;
 
     // Google API client:
     private GoogleApiClient googleApiClient;
 
     private ProgressDialog progressDialog;
     private WeatherAPIHandlerFragment handlerFragment;
-    private ImageView forecastIcon;
+    private TextView localityDisplay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,9 +91,6 @@ public class WeatherActivity extends AppCompatActivity implements
         progressDialog.setCanceledOnTouchOutside(false);
         progressDialog.setCancelable(false);
 
-        // Sett opp værikon:
-        forecastIcon = (ImageView) findViewById(R.id.weatherIcon);
-
         // Konstruer GoogleApiClient:
         if (googleApiClient == null) {
             googleApiClient = new GoogleApiClient.Builder(this)
@@ -94,9 +100,28 @@ public class WeatherActivity extends AppCompatActivity implements
                     .build();
         }
 
-        // Hvis dette er første gangen aktiviteten kjører:
-        if (savedInstanceState == null) {
+        // Sett opp ForecastFragment-liste:
+        forecastFragments = new ArrayList<ForecastFragment>();
 
+        // Sett opp TextView som viser sted:
+        localityDisplay = (TextView) findViewById(R.id.locality);
+
+        // Hvis aktiviteten er rekonstruert hentes verdier fra Bundle:
+        if (savedInstanceState != null) {
+            location = savedInstanceState.getParcelable(BUNDLE_TAG_LOCATION);
+            forecasts = (Forecast[]) savedInstanceState.getSerializable(BUNDLE_TAG_FORECASTS);
+            locality = savedInstanceState.getString(BUNDLE_TAG_LOCALITY);
+
+            // Finn fragmenter:
+            if (forecasts != null) {
+                for (Forecast forecast : forecasts) {
+                    forecastFragments.add((ForecastFragment) fm.findFragmentByTag(forecast.getDisplayDate()));
+                }
+            }
+
+            if (locality != null) {
+                localityDisplay.setText(locality);
+            }
         }
     }
 
@@ -110,6 +135,7 @@ public class WeatherActivity extends AppCompatActivity implements
     @Override
     protected void onStop() {
         super.onStop();
+
         if (googleApiClient.isConnected()) {
             googleApiClient.disconnect();
         }
@@ -139,10 +165,9 @@ public class WeatherActivity extends AppCompatActivity implements
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        /*
-        outState.putSerializable("session", sess);
-        outState.putInt("time_left", timeLeft);
-        */
+        outState.putSerializable(BUNDLE_TAG_FORECASTS, forecasts);
+        outState.putParcelable(BUNDLE_TAG_LOCATION, location);
+        outState.putString(BUNDLE_TAG_LOCALITY, locality);
     }
 
     @Override
@@ -159,25 +184,54 @@ public class WeatherActivity extends AppCompatActivity implements
     // Callback fra WeatherAPIHandlerFragment setter værvarsler:
     public void setForecasts(Forecast[] forecasts) {
         this.forecasts = forecasts;
-        forecastIcon.setImageBitmap(forecasts[0].getWeatherIconBitmap());
 
         // Avslutt progressdialog hvis andre AsyncTask ikke kjører:
         if (handlerFragment.getFetchLocalityStatus() != AsyncTask.Status.RUNNING) {
             progressDialog.dismiss();
+        }
+
+        drawForecastFragments();
+    }
+
+    // Metode som lager ForecastFragmenter og legger dem i ScrollView:
+    private void drawForecastFragments() {
+        if (forecasts == null) {
+            return;
+        }
+
+        if (forecastFragments.size() > 0) {
+            destroyForecastFragments();
+        }
+
+        FragmentManager fm = getFragmentManager();
+
+        for (Forecast forecast : forecasts) {
+            ForecastFragment frag = ForecastFragment.newInstance(forecast);
+            // DisplayDate er unik for hver forecast og brukes derfor som Fragment Tag:
+            fm.beginTransaction().add(R.id.forecastContainer, frag, forecast.getDisplayDate()).commit();
+            forecastFragments.add(frag);
+        }
+    }
+
+    // Metode som fjerner ForecastFragmenter:
+    private void destroyForecastFragments() {
+        FragmentManager fm = getFragmentManager();
+
+        for (int i = 0; i < forecastFragments.size(); i++) {
+            fm.beginTransaction().remove(forecastFragments.get(i)).commit();
         }
     }
 
     // Callback fra WeatherAPIHandlerFragment setter locality (by):
     public void setLocality(String locality) {
         // AsyncTasken returnerer "" hvis den ikke fant by:
-        if (locality != "") {
+        if (!locality.equals("")) {
             this.locality = locality;
         }
         else {
-            this.locality = getResources().getString(R.string.unknown_locale);
+            this.locality = getResources().getString(R.string.unknown_locality);
         }
 
-        TextView localityDisplay = (TextView) findViewById(R.id.textView);
         localityDisplay.setText(locality);
 
         // Avslutt progressdialog hvis andre AsyncTask ikke kjører:
@@ -245,15 +299,9 @@ public class WeatherActivity extends AppCompatActivity implements
     // Callback når brukeren har angitt om appen får nødvendige permissions:
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        if (requestCode == REQUEST_PERMISSION_ACCESS_COARSE_LOCATION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, kjør fetchLocation() på nytt:
-                fetchLocation();
-            }
-            else {
-                // Permission denied, vis feilmelding:
-            }
-        }
+        /* Denne metoden og fetchLocation går i evig løkke inntil brukeren
+           gir nødvendige permissions: */
+        fetchLocation();
     }
 
     /***************************************

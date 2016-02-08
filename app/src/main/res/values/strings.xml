@@ -4,5 +4,10 @@
     <string name="progressdialog_hdr">Please wait</string>
     <string name="progressdialog_text">Fetching weather forecast..</string>
     <string name="displaydate_today">Today</string>
-    <string name="unknown_locale">Unknown locale</string>
+    <string name="unknown_locality">Unknown locality</string>
+    <string name="localityHdr">Forecast:</string>
+    <string name="tempHdr">Temperature:</string>
+    <string name="windHdr">Wind:</string>
+    <string name="windspeedUnit">mps</string>
+    <string name="precipitationHdr">Precipitation:</string>
 </resources>

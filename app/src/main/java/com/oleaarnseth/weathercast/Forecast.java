@@ -1,38 +1,31 @@
 package com.oleaarnseth.weathercast;
 
-import android.graphics.Bitmap;
-
-import java.io.File;
+import java.io.Serializable;
 
 /**
  * Denne klassen rommer værvarsel-data for et gjeldende tidsrom.
  */
-public class Forecast {
+public class Forecast implements Serializable {
     // XML-oppføringens tid lagres som String for enkelthetens skyld:
     private String timeFrom, timeTo;
 
     // Dato som vises i Spinner i WeatherActivity:
     private String displayDate;
 
-    private double temperature, windspeed, precipitation;
+    private double windspeed;
+    private Temperature temperature;
+    private Precipitation precipitation;
+    private WeatherIcon weatherIcon;
 
-    /* Denne variablelen rommer id-en for værvarselets værikon, som lastes ned fra:
-           http://api.yr.no/weatherapi/weathericon/1.1/documentation */
-    private int iconNumber;
-
-    // Værvarselsikon fra yr sitt WeatherAPI, avledes fra "iconNumber":
-    private File weatherIcon;
-
-    // Konstruktør
-    public Forecast(String timeFrom, String timeTo, double temperature, double windspeed, double precipitation, int iconNumber) {
+    // Konstruktør:
+    public Forecast(String timeFrom, String timeTo, Temperature temperature, double windspeed, Precipitation precipitation, WeatherIcon weatherIcon) {
         this.timeFrom = timeFrom;
         this.timeTo = timeTo;
         this.temperature = temperature;
         this.windspeed = windspeed;
         this.precipitation = precipitation;
-        this.iconNumber = iconNumber;
         displayDate = "";
-        weatherIcon = null;
+        this.weatherIcon = weatherIcon;
     }
 
 
@@ -40,29 +33,24 @@ public class Forecast {
 
     public String getTimeTo() { return timeTo; }
 
+    public String getDisplayDate() { return displayDate; }
+
+    public Temperature getTemperature() { return temperature; }
+
+    public double getWindspeed() { return windspeed; }
+
     public void setDisplayDate(String displayDate) { this.displayDate = displayDate; }
 
-    public void setPrecipitation(double precipitation) {
+    public void setPrecipitation(Precipitation precipitation) {
         this.precipitation = precipitation;
     }
 
-    public void setIconNumber(int iconNumber) {
-        this.iconNumber = iconNumber;
-    }
+    public void setForecastWeatherIcon(WeatherIcon weatherIcon) { this.weatherIcon = weatherIcon; }
 
-    public double getPrecipitation() { return precipitation; }
+    public Precipitation getPrecipitation() { return precipitation; }
 
-    public int getIconNumber() {
-        return iconNumber;
-    }
-
-    public void setWeatherIcon(File weatherIcon) { this.weatherIcon = weatherIcon; }
-
-    public File getWeatherIcon() { return weatherIcon; }
-
-    public Bitmap getWeatherIconBitmap() {
-        FileHandler fh = new FileHandler();
-        return fh.readIconFromFile(weatherIcon);
+    public WeatherIcon getWeatherIcon() {
+        return weatherIcon;
     }
 
     @Override
@@ -72,13 +60,11 @@ public class Forecast {
                 + "\nTime to: "
                 + timeTo
                 + "\nTemperature: "
-                + temperature
+                + temperature.toString()
                 + "\nWindspeed: "
                 + windspeed
                 + "\nPrecipitation: "
                 + precipitation
-                + "\nIcon number: "
-                + iconNumber
                 + "\nDisplay date: "
                 + displayDate;
     }

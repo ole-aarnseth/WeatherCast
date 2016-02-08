@@ -211,7 +211,7 @@ public class WeatherAPIHandlerFragment extends Fragment {
         }
 
         forecasts[0].setPrecipitation(extra.getPrecipitation());
-        forecasts[0].setIconNumber(extra.getIconNumber());
+        forecasts[0].setForecastWeatherIcon(extra.getWeatherIcon());
         forecasts[0].setDisplayDate(getResources().getString(R.string.displaydate_today));
         downloadWeatherIcon(forecasts[0]);
 
@@ -230,7 +230,7 @@ public class WeatherAPIHandlerFragment extends Fragment {
             forecasts[i] = assembleForecast(iterator, xmlFormat.format(cal.getTime()) + XML_DATE_STRING_END);
 
             String displayDate = days[Integer.parseInt(forecasts[i].getTimeTo().substring(8, 10)) - 1]
-                    + " "
+                    + System.getProperty("line.separator")
                     + months[Integer.parseInt(forecasts[i].getTimeTo().substring(5, 7)) - 1];
 
             forecasts[i].setDisplayDate(displayDate);
@@ -263,7 +263,7 @@ public class WeatherAPIHandlerFragment extends Fragment {
         }
 
         forecast.setPrecipitation(extra.getPrecipitation());
-        forecast.setIconNumber(extra.getIconNumber());
+        forecast.setForecastWeatherIcon(extra.getWeatherIcon());
         downloadWeatherIcon(forecast);
 
         return forecast;
@@ -271,8 +271,8 @@ public class WeatherAPIHandlerFragment extends Fragment {
 
     // Hjelpemetode som laster ned værvarselsikon fra yr sitt WeatherAPI:
     private void downloadWeatherIcon(Forecast forecast) {
-        if (forecast.getIconNumber() == -1) {
-            throw new IllegalStateException("Weather icon number not set.");
+        if (forecast.getWeatherIcon() == null || forecast.getWeatherIcon().getIconNumber() == -1) {
+            throw new IllegalStateException("Weather icon not set.");
         }
 
         URL url;
@@ -282,7 +282,7 @@ public class WeatherAPIHandlerFragment extends Fragment {
             url = new URL(WEATHER_ICON_URL
                     + WEATHER_ICON_VERSION
                     + WEATHER_ICON_ATTRIBUTE_ICON_NUMBER
-                    + forecast.getIconNumber()
+                    + forecast.getWeatherIcon().getIconNumber()
                     + WEATHER_ICON_ATTRIBUTE_CONTENT_TYPE);
             connection = (HttpURLConnection) url.openConnection();
             connection.setDoInput(true);
@@ -292,8 +292,10 @@ public class WeatherAPIHandlerFragment extends Fragment {
                 InputStream in = connection.getInputStream();
                 Bitmap bm = BitmapFactory.decodeStream(in);
 
+                // Setter ikonfilen i objektet til nedlastet png-fil:
                 FileHandler fh = new FileHandler();
-                forecast.setWeatherIcon(fh.saveToFile(bm, forecast.getIconNumber(), getActivity().getExternalCacheDir()));
+                WeatherIcon weatherIcon = forecast.getWeatherIcon();
+                weatherIcon.setWeatherIconFile(fh.saveToFile(bm, forecast.getWeatherIcon().getIconNumber(), getActivity().getExternalCacheDir()));
             }
         } catch (MalformedURLException e) {
             e.printStackTrace();

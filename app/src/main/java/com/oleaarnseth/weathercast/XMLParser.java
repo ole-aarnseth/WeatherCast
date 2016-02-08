@@ -1,6 +1,5 @@
 package com.oleaarnseth.weathercast;
 
-import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -8,7 +7,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 
@@ -20,18 +18,29 @@ public class XMLParser {
     // Start-tag for XML-data:
     public static final String START_TAG_WEATHERDATA = "weatherdata";
 
+    // XML-tagger:
     public static final String TAG_FORECAST = "time";
     public static final String TAG_TEMPERATURE = "temperature";
     public static final String TAG_WINDSPEED = "windSpeed";
     public static final String TAG_PRECIPITATION = "precipitation";
     public static final String TAG_SYMBOL = "symbol";
 
+    // XML-attributter:
     public static final String ATTRIBUTE_TIME_FROM = "from";
     public static final String ATTRIBUTE_TIME_TO = "to";
     public static final String ATTRIBUTE_TEMPERATURE = "value";
+    public static final String ATTRIBUTE_UNIT = "unit";
     public static final String ATTRIBUTE_WINDSPEED = "mps";
     public static final String ATTRIBUTE_PRECIPITATION_VALUE = "value";
     public static final String ATTRIBUTE_SYMBOL_NUMBER = "number";
+
+    // Måleenheter for temperature og XML-feeden:
+    public static final String TEMPERATURE_UNIT_CELSIUS = "celsius";
+    public static final String TEMPERATURE_UNIT_FAHRENHEIT = "fahrenheit";
+
+    // Måleenheter for precipitation og XML-feeden:
+    public static final String PRECIPITATION_UNIT_MILLIMETERS = "mm";
+    public static final String PRECIPITATION_UNIT_INCHES = "in";
 
     // Her starter parseren, som videre kaller alle private hjelpemetoder under:
     public LinkedList<Forecast> parse(InputStream in) throws XmlPullParserException, IOException {
@@ -73,9 +82,9 @@ public class XMLParser {
         String timeFrom = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TIME_FROM);
         String timeTo = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TIME_TO);
 
-        double temperature = Double.MIN_VALUE;
+        Temperature temperature = null;
         double windspeed = Double.MIN_VALUE;
-        double precipitation = Double.MIN_VALUE;
+        Precipitation precipitation = null;
         int iconNumber = -1;
 
         int depth = 1;
@@ -109,17 +118,22 @@ public class XMLParser {
             }
         }
 
-        return new Forecast(timeFrom, timeTo, temperature, windspeed, precipitation, iconNumber);
+        return new Forecast(timeFrom, timeTo, temperature, windspeed, precipitation, new WeatherIcon(iconNumber));
     }
 
-    private double readTemperature(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private Temperature readTemperature(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_TEMPERATURE);
 
         String temperatureStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TEMPERATURE);
-
         double temperature = Double.parseDouble(temperatureStr);
+        String temperatureUnit = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_UNIT);
 
-        return temperature;
+        if (temperatureUnit.equals(TEMPERATURE_UNIT_FAHRENHEIT)) {
+            return new Temperature(Temperature.FAHRENHEIT, temperature);
+        }
+        else {
+            return new Temperature(Temperature.CELSIUS, temperature);
+        }
     }
 
     private double readWindSpeed(XmlPullParser parser) throws XmlPullParserException, IOException {
@@ -132,33 +146,19 @@ public class XMLParser {
         return windspeed;
     }
 
-    private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
-        if (parser.getEventType() != XmlPullParser.START_TAG) {
-            throw new IllegalStateException();
-        }
-
-        int depth = 1;
-
-        while (depth > 0) {
-            int event = parser.next();
-
-            if (event == XmlPullParser.END_TAG) {
-                depth--;
-            }
-            else if (event == XmlPullParser.START_TAG) {
-                depth++;
-            }
-        }
-    }
-
-    private double readPrecipitation(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private Precipitation readPrecipitation(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_PRECIPITATION);
 
         String precipitationStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_PRECIPITATION_VALUE);
-
         double precipitation = Double.parseDouble(precipitationStr);
+        String unit = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_UNIT);
 
-        return precipitation;
+        if (unit.equals(PRECIPITATION_UNIT_INCHES)) {
+            return new Precipitation(Precipitation.UNIT_INCHES, precipitation);
+        }
+        else {
+            return new Precipitation(Precipitation.UNIT_MILLIMETER, precipitation);
+        }
     }
 
     private int readIconNumber(XmlPullParser parser) throws XmlPullParserException, IOException {
