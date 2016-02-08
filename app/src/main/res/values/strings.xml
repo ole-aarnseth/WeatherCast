@@ -6,6 +6,7 @@
     <string name="displaydate_today">Today</string>
     <string name="unknown_locality">Unknown locality</string>
     <string name="localityHdr">Forecast:</string>
+    <string name="dateHdr">Day:</string>
     <string name="tempHdr">Temperature:</string>
     <string name="windHdr">Wind:</string>
     <string name="windspeedUnit">mps</string>

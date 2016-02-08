@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="50dp">
+    android:layout_height="50dp"
+    android:background="@drawable/forecast_background">
 
     <ImageView
         android:layout_width="45dp"
@@ -15,30 +16,20 @@
         tools:ignore="HardcodedText" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_width="70dp"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:id="@+id/date"
         android:layout_gravity="center_vertical"
         android:textStyle="bold"
-        android:textColor="@color/DarkBlue"
-        android:text="23rd September" />
+        android:textColor="@color/DarkBlue" />
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="70dp"
         android:layout_height="match_parent"
-        android:layout_marginLeft="3dp">
-
-        <TextView
-            android:layout_marginTop="7dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/tempHdr"
-            android:id="@+id/tempHeader"
-            android:layout_gravity="center_horizontal"
-            android:textColor="@color/DarkBlue" />
+        android:gravity="center_vertical">
 
         <TextView
             android:layout_width="wrap_content"
@@ -48,23 +39,14 @@
             android:layout_gravity="center_horizontal"
             android:textStyle="bold"
             android:textColor="@color/Black" />
+
     </LinearLayout>
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="64dp"
         android:layout_height="match_parent"
-        android:layout_marginLeft="3dp">
-
-        <TextView
-            android:layout_marginTop="7dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/windHdr"
-            android:id="@+id/windHeader"
-            android:layout_gravity="center_horizontal"
-            android:textColor="@color/DarkBlue" />
+        android:gravity="center_vertical">
 
         <LinearLayout
             android:orientation="horizontal"
@@ -97,19 +79,9 @@
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_width="wrap_content"
+        android:layout_width="76dp"
         android:layout_height="match_parent"
-        android:layout_marginLeft="7dp">
-
-        <TextView
-            android:layout_marginTop="7dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="@string/precipitationHdr"
-            android:id="@+id/precipitationHeader"
-            android:layout_gravity="center_horizontal"
-            android:textColor="@color/DarkBlue" />
+        android:gravity="center_vertical">
 
         <TextView
             android:layout_width="wrap_content"
