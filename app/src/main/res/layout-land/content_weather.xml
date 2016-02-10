@@ -46,7 +46,8 @@
             android:id="@+id/refreshBtn"
             android:layout_marginLeft="65dp"
             android:background="@drawable/btn_style"
-            android:minWidth="140dp" />
+            android:minWidth="140dp"
+            android:textSize="15sp" />
 
     </LinearLayout>
 

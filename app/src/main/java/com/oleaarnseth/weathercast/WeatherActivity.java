@@ -1,8 +1,10 @@
 package com.oleaarnseth.weathercast;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -38,9 +40,16 @@ public class WeatherActivity extends AppCompatActivity implements
     public static final int REQUEST_PERMISSION_ACCESS_COARSE_LOCATION = 1;
 
     // Bundle-tagger:
-    public static final String BUNDLE_TAG_FORECASTS = "forecasts",
+    public static final String BUNDLE_TAG_INTERNET_ERROR = "interneterror",
+            BUNDLE_TAG_FORECASTS = "forecasts",
             BUNDLE_TAG_LOCATION = "location",
             BUNDLE_TAG_LOCALITY = "locality";
+
+    // Angir feilstatus om internettilkobing:
+    private boolean internetError;
+
+    // AlertDialog for internettfeil:
+    private AlertDialog alertDialog;
 
     // Værvarsler og sted:
     private Forecast[] forecasts;
@@ -108,6 +117,7 @@ public class WeatherActivity extends AppCompatActivity implements
             location = savedInstanceState.getParcelable(BUNDLE_TAG_LOCATION);
             forecasts = (Forecast[]) savedInstanceState.getSerializable(BUNDLE_TAG_FORECASTS);
             locality = savedInstanceState.getString(BUNDLE_TAG_LOCALITY);
+            internetError = savedInstanceState.getBoolean(BUNDLE_TAG_INTERNET_ERROR);
 
             // Finn fragmenter:
             if (forecasts != null) {
@@ -147,14 +157,24 @@ public class WeatherActivity extends AppCompatActivity implements
                 || handlerFragment.getFetchLocalityStatus() == AsyncTask.Status.RUNNING) {
             progressDialog.show();
         }
+
+        // Prøv på nytt hvis det var internettilkoblingsproblem:
+        if (internetError) {
+            internetError = false;
+            fetchLocation();
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
 
-        if (progressDialog != null) {
+        if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
+        }
+
+        if (alertDialog != null) {
+            alertDialog.dismiss();
         }
     }
 
@@ -162,6 +182,7 @@ public class WeatherActivity extends AppCompatActivity implements
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        outState.putBoolean(BUNDLE_TAG_INTERNET_ERROR, internetError);
         outState.putSerializable(BUNDLE_TAG_FORECASTS, forecasts);
         outState.putParcelable(BUNDLE_TAG_LOCATION, location);
         outState.putString(BUNDLE_TAG_LOCALITY, locality);
@@ -178,6 +199,29 @@ public class WeatherActivity extends AppCompatActivity implements
         googleApiClient = null;
     }
 
+    // Kalles av WeatherAPIHandler hvis det er et problem med internettilkobling:
+    public void internetConnectionProblem() {
+        internetError = true;
+        progressDialog.dismiss();
+
+        showAlertDialog();
+    }
+
+    // Vis AlertDialog for problemer med internettilkobling:
+    private void showAlertDialog() {
+        alertDialog = new AlertDialog.Builder(this)
+                .setTitle(getResources().getString(R.string.internetErrorHdr))
+                .setMessage(getResources().getString(R.string.internetError))
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setCancelable(false)
+                .setPositiveButton(R.string.tryAgain, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        fetchLocation();
+                    }
+                })
+                .show();
+    }
+
     // Callback fra WeatherAPIHandlerFragment setter værvarsler:
     public void setForecasts(Forecast[] forecasts) {
         this.forecasts = forecasts;
@@ -188,6 +232,24 @@ public class WeatherActivity extends AppCompatActivity implements
         }
 
         drawForecastFragments();
+    }
+
+    // Callback fra WeatherAPIHandlerFragment setter locality (by):
+    public void setLocality(String locality) {
+        // AsyncTasken returnerer "" hvis den ikke fant by:
+        if (!locality.equals("")) {
+            this.locality = locality;
+        }
+        else {
+            this.locality = getResources().getString(R.string.unknown_locality);
+        }
+
+        localityDisplay.setText(locality);
+
+        // Avslutt progressdialog hvis andre AsyncTask ikke kjører:
+        if (handlerFragment.getFetchForecastTaskStatus() != AsyncTask.Status.RUNNING) {
+            progressDialog.dismiss();
+        }
     }
 
     // Metode som lager ForecastFragmenter og legger dem i ScrollView:
@@ -216,24 +278,6 @@ public class WeatherActivity extends AppCompatActivity implements
 
         for (int i = 0; i < forecastFragments.size(); i++) {
             fm.beginTransaction().remove(forecastFragments.get(i)).commit();
-        }
-    }
-
-    // Callback fra WeatherAPIHandlerFragment setter locality (by):
-    public void setLocality(String locality) {
-        // AsyncTasken returnerer "" hvis den ikke fant by:
-        if (!locality.equals("")) {
-            this.locality = locality;
-        }
-        else {
-            this.locality = getResources().getString(R.string.unknown_locality);
-        }
-
-        localityDisplay.setText(locality);
-
-        // Avslutt progressdialog hvis andre AsyncTask ikke kjører:
-        if (handlerFragment.getFetchForecastTaskStatus() != AsyncTask.Status.RUNNING) {
-            progressDialog.dismiss();
         }
     }
 

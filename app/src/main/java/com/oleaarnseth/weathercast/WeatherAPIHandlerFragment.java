@@ -13,8 +13,10 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -28,6 +30,8 @@ import java.util.Locale;
  */
 public class WeatherAPIHandlerFragment extends Fragment {
     public static final String TAG_FRAGMENT = "WeatherAPIHandler";
+
+    private static final String INTERNET_CONNECTION_CHECK_HOST = "www.google.com";
 
     private static final String WEATHER_URL = "http://api.yr.no/weatherapi/locationforecast/";
     private static final String WEATHER_VERSION = "1.9";
@@ -83,6 +87,22 @@ public class WeatherAPIHandlerFragment extends Fragment {
         return fragment;
     }
 
+    // Hjelpemetode som sjekker at internettilkobling er tilgjengelig:
+    private boolean internetIsConnected() {
+        try {
+            InetAddress ip = InetAddress.getByName(INTERNET_CONNECTION_CHECK_HOST);
+
+            if (ip.equals("")) {
+                return false;
+            }
+
+            return true;
+        }
+        catch (UnknownHostException e) {
+            return false;
+        }
+    }
+
     // Starter AsyncTask i hodeløst fragment, kalles fra WeatherActivity:
     public void startFetchForecastTask() {
         if (location == null || fetchForeCastTask.getStatus() == AsyncTask.Status.RUNNING) {
@@ -105,6 +125,10 @@ public class WeatherAPIHandlerFragment extends Fragment {
     private class FetchForecastTask extends AsyncTask<Location, Void, Forecast[]> {
         @Override
         protected Forecast[] doInBackground(Location... params) {
+            if (!internetIsConnected()) {
+                return null;
+            }
+
             URL url;
             HttpURLConnection connection = null;
             LinkedList<Forecast> rawData = null;
@@ -147,10 +171,16 @@ public class WeatherAPIHandlerFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Forecast[] result) {
-            // Hvis result == null har det skjedd en feil, og feildialog vises i WeatherActivity:
             WeatherActivity activity = (WeatherActivity) getActivity();
-            activity.setForecasts(result);
-            startFetchLocalityTask();
+
+            if (result != null) {
+                activity.setForecasts(result);
+                startFetchLocalityTask();
+            }
+            // Hvis result == null har det skjedd en feil, og feildialog vises i WeatherActivity:
+            else {
+                activity.internetConnectionProblem();
+            }
         }
     }
 

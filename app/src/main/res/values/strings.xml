@@ -12,4 +12,7 @@
     <string name="windspeedUnit">mps</string>
     <string name="precipitationHdr">Precipitation:</string>
     <string name="refresh">Refresh</string>
+    <string name="internetErrorHdr">Connection problem</string>
+    <string name="internetError">This app requires an internet connection, please connect device to internet and try again.</string>
+    <string name="tryAgain">Try again</string>
 </resources>
