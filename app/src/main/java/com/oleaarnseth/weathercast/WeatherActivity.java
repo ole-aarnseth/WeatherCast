@@ -7,16 +7,13 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -59,6 +56,7 @@ public class WeatherActivity extends AppCompatActivity implements
     private ProgressDialog progressDialog;
     private WeatherAPIHandlerFragment handlerFragment;
     private TextView localityDisplay;
+    private Button refreshButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +87,15 @@ public class WeatherActivity extends AppCompatActivity implements
                     .addApi(LocationServices.API)
                     .build();
         }
+
+        // Sett opp oppdateringsknapp:
+        refreshButton = (Button) findViewById(R.id.refreshBtn);
+        refreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                refreshForecasts();
+            }
+        });
 
         // Sett opp ForecastFragment-liste:
         forecastFragments = new ArrayList<ForecastFragment>();
@@ -189,7 +196,7 @@ public class WeatherActivity extends AppCompatActivity implements
             return;
         }
 
-        if (forecastFragments.size() > 0) {
+        if (forecastFragments.size() != 0) {
             destroyForecastFragments();
         }
 
@@ -250,6 +257,17 @@ public class WeatherActivity extends AppCompatActivity implements
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void refreshForecasts() {
+        // Oppdater lokasjon og værvarsler:
+        if (googleApiClient.isConnected()) {
+            location = null;
+        }
+        forecasts = null;
+        destroyForecastFragments();
+
+        fetchLocation();
     }
 
     // Henter lokasjonsdata, skal kun kalles når GoogleApiClient er oppkoblet:

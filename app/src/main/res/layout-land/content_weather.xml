@@ -38,6 +38,16 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:id="@+id/locality"
             android:textSize="27sp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/refresh"
+            android:id="@+id/refreshBtn"
+            android:layout_marginLeft="65dp"
+            android:background="@drawable/btn_style"
+            android:minWidth="140dp" />
+
     </LinearLayout>
 
     <LinearLayout

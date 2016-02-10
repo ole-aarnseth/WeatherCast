@@ -29,18 +29,18 @@ import java.util.Locale;
 public class WeatherAPIHandlerFragment extends Fragment {
     public static final String TAG_FRAGMENT = "WeatherAPIHandler";
 
-    public static final String WEATHER_URL = "http://api.yr.no/weatherapi/locationforecast/";
-    public static final String WEATHER_VERSION = "1.9";
-    public static final String WEATHER_ATTRIBUTE_LAT = "/?lat=";
-    public static final String WEATHER_ATTRIBUTE_LON = ";lon=";
+    private static final String WEATHER_URL = "http://api.yr.no/weatherapi/locationforecast/";
+    private static final String WEATHER_VERSION = "1.9";
+    private static final String WEATHER_ATTRIBUTE_LAT = "/?lat=";
+    private static final String WEATHER_ATTRIBUTE_LON = ";lon=";
 
-    public static final String WEATHER_ICON_URL = "http://api.yr.no/weatherapi/weathericon/";
-    public static final String WEATHER_ICON_VERSION = "1.1";
-    public static final String WEATHER_ICON_ATTRIBUTE_ICON_NUMBER = "/?symbol=";
-    public static final String WEATHER_ICON_ATTRIBUTE_CONTENT_TYPE = ";content_type=image/png";
+    private static final String WEATHER_ICON_URL = "http://api.yr.no/weatherapi/weathericon/";
+    private static final String WEATHER_ICON_VERSION = "1.1";
+    private static final String WEATHER_ICON_ATTRIBUTE_ICON_NUMBER = "/?symbol=";
+    private static final String WEATHER_ICON_ATTRIBUTE_CONTENT_TYPE = ";content_type=image/png";
 
-    public static final int HTTP_OK = 200, HTTP_DEPRECATED = 203;
-    public static final int READ_TIMEOUT = 10000, CONNECT_TIMEOUT = 15000;
+    private static final int HTTP_OK = 200, HTTP_DEPRECATED = 203;
+    private static final int READ_TIMEOUT = 10000, CONNECT_TIMEOUT = 15000;
 
     /* Angir for hvor mange dager varsel skal gis for (weatherAPI gir
     varsler for maks 9 dager fram i tid): */
@@ -49,9 +49,10 @@ public class WeatherAPIHandlerFragment extends Fragment {
     // Formateringsstreng for SimpleDateFormat tilpasset datoformatet i XML-dataene:
     public static final String XML_DATE_FORMAT = "yyyy-MM-dd";
 
-    // Siste halvdel av en dato-oppføring i XML-data:
-    public static final String XML_DATE_STRING_END_TIME_06 = "T06:00:00Z";
-    public static final String XML_DATE_STRING_END_TIME_12 = "T12:00:00Z";
+    // Siste halvdel av dato-oppføringer i XML-data:
+    private static final String XML_DATE_STRING_END_TIME_06 = "T06:00:00Z";
+    private static final String XML_DATE_STRING_END_TIME_12 = "T12:00:00Z";
+    private static final String XML_DATE_STRING_END_TIME_18 = "T18:00:00Z";
 
     // AsyncTasker som henter værvarsler og utfører reverse geocoding:
     private FetchForecastTask fetchForeCastTask;
@@ -276,7 +277,8 @@ public class WeatherAPIHandlerFragment extends Fragment {
         // Hent precipitation og ikon i oppføring fra 06:00 til 12:00:
         while (iterator.hasNext()) {
             extra = iterator.next();
-            if (extra.getTimeFrom().equals(extraTimeFrom) && extra.getTimeTo().equals(forecastTime)) {
+            if ((extra.getTimeFrom().equals(extraTimeFrom) && extra.getTimeTo().equals(forecastTime))
+                    || !extra.getTimeTo().substring(0, 10).equals(dateString)) {
                 break;
             }
         }
@@ -288,6 +290,25 @@ public class WeatherAPIHandlerFragment extends Fragment {
         forecast.setPrecipitation(extra.getPrecipitation());
         forecast.setForecastWeatherIcon(extra.getWeatherIcon());
         downloadWeatherIcon(forecast);
+
+        // Hent precipitation i oppføring fra 12:00 til 18:00, og adder den til den over:
+        String extraTimeTo = dateString + XML_DATE_STRING_END_TIME_18;
+
+        while (iterator.hasNext()) {
+            extra = iterator.next();
+            if ((extra.getTimeFrom().equals(forecastTime) && extra.getTimeTo().equals(extraTimeTo))
+                    || !extra.getTimeTo().substring(0, 10).equals(dateString)) {
+                break;
+            }
+        }
+
+        // Adder precipitation for total fra 06:00 til 18:00:
+        if (extra.getTimeTo().equals(extraTimeTo)) {
+            double precipitation = extra.getPrecipitation().getPrecipitationDouble()
+                    + forecast.getPrecipitation().getPrecipitationDouble();
+
+            forecast.getPrecipitation().setPrecipitationDouble(precipitation);
+        }
 
         return forecast;
     }

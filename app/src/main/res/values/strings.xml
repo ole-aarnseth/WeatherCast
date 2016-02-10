@@ -11,4 +11,5 @@
     <string name="windHdr">Wind:</string>
     <string name="windspeedUnit">mps</string>
     <string name="precipitationHdr">Precipitation:</string>
+    <string name="refresh">Refresh</string>
 </resources>

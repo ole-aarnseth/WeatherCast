@@ -26,6 +26,7 @@ public class Precipitation implements Serializable {
     }
 
     public double getPrecipitationDouble() { return precipitation; }
+    public void setPrecipitationDouble(double precipitation) { this.precipitation = precipitation; }
 
     @Override
     public String toString() {
