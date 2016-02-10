@@ -15,7 +15,7 @@ import java.net.URL;
  * Denne klassen inneholder all filinformasjon om værikoner fra WeatherAPI for værvarsler:
  */
 public class WeatherIcon implements Serializable {
-    /* Denne variablelen rommer id-en for værvarselets værikon, som lastes ned fra:
+    /* Denne variablelen rommer iden for værvarselets værikon, som lastes ned fra:
        http://api.yr.no/weatherapi/weathericon/1.1/documentation */
     private int iconNumber;
 

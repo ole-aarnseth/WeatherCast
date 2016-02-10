@@ -8,7 +8,7 @@ import java.io.Serializable;
  */
 public class Temperature implements Serializable {
     // Konstanter som angir måleenhet for temperatur:
-    public static final int CELSIUS = 0, FAHRENHEIT = 1;
+    public static final int CELSIUS = 1, FAHRENHEIT = 2;
 
     // String-konstanter brukt av toString-metoden:
     private static final String STRING_CELSIUS = "°C", STRING_FAHRENHEIT = "°F";

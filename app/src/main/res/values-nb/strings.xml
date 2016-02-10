@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">WeatherCast</string>
+    <string name="action_settings">Innstillinger</string>
+    <string name="progressdialog_hdr">Vennligst vent</string>
+    <string name="progressdialog_text">Henter værvarsel..</string>
+    <string name="displaydate_today">I dag</string>
+    <string name="unknown_locality">Ukjent sted</string>
+    <string name="localityHdr">Værvarsel:</string>
+    <string name="dateHdr">Dag:</string>
+    <string name="tempHdr">Temperatur:</string>
+    <string name="windHdr">Vind:</string>
+    <string name="windspeedUnit">m/s</string>
+    <string name="precipitationHdr">Nedbør:</string>
+</resources>

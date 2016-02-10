@@ -9,10 +9,11 @@ public class Forecast implements Serializable {
     // XML-oppføringens tid lagres som String for enkelthetens skyld:
     private String timeFrom, timeTo;
 
-    // Dato som vises i Spinner i WeatherActivity:
+    // Dato som vises i ForecastFragment:
     private String displayDate;
 
     private double windspeed;
+
     private Temperature temperature;
     private Precipitation precipitation;
     private WeatherIcon weatherIcon;
@@ -24,8 +25,8 @@ public class Forecast implements Serializable {
         this.temperature = temperature;
         this.windspeed = windspeed;
         this.precipitation = precipitation;
-        displayDate = "";
         this.weatherIcon = weatherIcon;
+        displayDate = "";
     }
 
 

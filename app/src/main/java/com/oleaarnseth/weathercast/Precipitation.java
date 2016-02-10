@@ -8,7 +8,7 @@ import java.io.Serializable;
  */
 public class Precipitation implements Serializable {
     // Konstanter som angir måleenhet:
-    public static final int UNIT_MILLIMETER = 0, UNIT_INCHES = 1;
+    public static final int UNIT_MILLIMETER = 1, UNIT_INCHES = 2;
 
     // String-konstanter brukt i toString-metoden:
     private static final String STRING_MILLIMETER = "mm", STRING_INCHES = "in";

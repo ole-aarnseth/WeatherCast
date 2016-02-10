@@ -49,11 +49,13 @@ public class WeatherAPIHandlerFragment extends Fragment {
     // Formateringsstreng for SimpleDateFormat tilpasset datoformatet i XML-dataene:
     public static final String XML_DATE_FORMAT = "yyyy-MM-dd";
 
-    // Siste halvdel av en dato-oppføring der klokken er 12:00:
-    public static final String XML_DATE_STRING_END = "T12:00:00Z";
+    // Siste halvdel av en dato-oppføring i XML-data:
+    public static final String XML_DATE_STRING_END_TIME_06 = "T06:00:00Z";
+    public static final String XML_DATE_STRING_END_TIME_12 = "T12:00:00Z";
 
-    private FetchForecastTask fetchForeCastTask = new FetchForecastTask();
-    private FetchLocalityTask fetchLocalityTask = new FetchLocalityTask();
+    // AsyncTasker som henter værvarsler og utfører reverse geocoding:
+    private FetchForecastTask fetchForeCastTask;
+    private FetchLocalityTask fetchLocalityTask;
 
     // Lokasjon som værvarsel skal hentes for:
     private Location location;
@@ -61,6 +63,14 @@ public class WeatherAPIHandlerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (fetchForeCastTask == null) {
+            fetchForeCastTask = new FetchForecastTask();
+        }
+
+        if (fetchLocalityTask == null) {
+            fetchLocalityTask = new FetchLocalityTask();
+        }
     }
 
     public void setLocation(Location location) { this.location = location; }
@@ -202,7 +212,7 @@ public class WeatherAPIHandlerFragment extends Fragment {
         Forecast[] forecasts = new Forecast[NUM_DAYS];
         Iterator<Forecast> iterator = rawData.iterator();
 
-        // Sett sammen første varsel basert på første og andre oppføring i listen:
+        // Sett sammen dagens værvarsel basert på første og andre oppføring i listen:
         forecasts[0] = iterator.next();
         Forecast extra = iterator.next();
 
@@ -225,9 +235,10 @@ public class WeatherAPIHandlerFragment extends Fragment {
             throw new IllegalStateException("Incomplete string array resources.");
         }
 
+        // Sett sammen værvarsler for resten av dagene:
         for (int i = 1; i < forecasts.length; i++) {
             cal.add(Calendar.DATE, 1);
-            forecasts[i] = assembleForecast(iterator, xmlFormat.format(cal.getTime()) + XML_DATE_STRING_END);
+            forecasts[i] = assembleForecast(iterator, xmlFormat.format(cal.getTime()));
 
             String displayDate = days[Integer.parseInt(forecasts[i].getTimeTo().substring(8, 10)) - 1]
                     + System.getProperty("line.separator")
@@ -244,22 +255,34 @@ public class WeatherAPIHandlerFragment extends Fragment {
     private Forecast assembleForecast(Iterator<Forecast> iterator, String dateString) {
         /* Flytt iterator til neste værvarsel for klokka 12:00 den gjeldende datoen,
            og hent ut forecast der timeFrom og timeTo er like: */
+        String forecastTime = dateString + XML_DATE_STRING_END_TIME_12;
+
         Forecast forecast = null;
+
         while (iterator.hasNext()) {
             forecast = iterator.next();
-            if (forecast.getTimeFrom().equals(dateString) && forecast.getTimeTo().equals(dateString)) {
+            if (forecast.getTimeFrom().equals(forecastTime) && forecast.getTimeTo().equals(forecastTime)) {
                 break;
             }
         }
 
-        if (forecast == null || !iterator.hasNext()) {
-            throw new IllegalStateException("Incomplete XML-data in iterator.");
+        if (!iterator.hasNext()) {
+            throw new IllegalStateException("Not enough XML data from parser.");
         }
 
-        Forecast extra = iterator.next();
+        String extraTimeFrom = dateString + XML_DATE_STRING_END_TIME_06;
+        Forecast extra = null;
 
-        if (!forecast.getTimeTo().equals(extra.getTimeTo())) {
-            throw new IllegalStateException("Inconsistent dates from XML-feed.");
+        // Hent precipitation og ikon i oppføring fra 06:00 til 12:00:
+        while (iterator.hasNext()) {
+            extra = iterator.next();
+            if (extra.getTimeFrom().equals(extraTimeFrom) && extra.getTimeTo().equals(forecastTime)) {
+                break;
+            }
+        }
+
+        if (!extra.getTimeTo().equals(forecastTime)) {
+            throw new IllegalStateException("Not enough XML data to assemble complete weather forecast.");
         }
 
         forecast.setPrecipitation(extra.getPrecipitation());
