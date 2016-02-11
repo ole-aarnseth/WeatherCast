@@ -216,6 +216,7 @@ public class WeatherActivity extends AppCompatActivity implements
                 .setCancelable(false)
                 .setPositiveButton(R.string.tryAgain, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        internetError = false;
                         fetchLocation();
                     }
                 })
@@ -279,6 +280,8 @@ public class WeatherActivity extends AppCompatActivity implements
         for (int i = 0; i < forecastFragments.size(); i++) {
             fm.beginTransaction().remove(forecastFragments.get(i)).commit();
         }
+
+        forecastFragments = new ArrayList<ForecastFragment>();
     }
 
     @Override
