@@ -15,4 +15,5 @@
     <string name="internetErrorHdr">Tilkoblingsproblem</string>
     <string name="internetError">Denne appen krever internettilkobling, vennligst koble enhet til internett og prøv igjen.</string>
     <string name="tryAgain">Prøv igjen</string>
+    <string name="credits">basert på data fra met.no</string>
 </resources>

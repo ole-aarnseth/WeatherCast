@@ -33,12 +33,12 @@ public class WeatherAPIHandlerFragment extends Fragment {
 
     private static final String INTERNET_CONNECTION_CHECK_HOST = "www.google.com";
 
-    private static final String WEATHER_URL = "http://api.yr.no/weatherapi/locationforecast/";
+    private static final String WEATHER_URL = "http://api.met.no/weatherapi/locationforecast/";
     private static final String WEATHER_VERSION = "1.9";
     private static final String WEATHER_ATTRIBUTE_LAT = "/?lat=";
     private static final String WEATHER_ATTRIBUTE_LON = ";lon=";
 
-    private static final String WEATHER_ICON_URL = "http://api.yr.no/weatherapi/weathericon/";
+    private static final String WEATHER_ICON_URL = "http://api.met.no/weatherapi/weathericon/";
     private static final String WEATHER_ICON_VERSION = "1.1";
     private static final String WEATHER_ICON_ATTRIBUTE_ICON_NUMBER = "/?symbol=";
     private static final String WEATHER_ICON_ATTRIBUTE_CONTENT_TYPE = ";content_type=image/png";

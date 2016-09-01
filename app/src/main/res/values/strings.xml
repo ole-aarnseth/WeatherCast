@@ -15,4 +15,5 @@
     <string name="internetErrorHdr">Connection problem</string>
     <string name="internetError">This app requires an internet connection, please connect device to internet and try again.</string>
     <string name="tryAgain">Try again</string>
+    <string name="credits">Based on data from MET Norway</string>
 </resources>
