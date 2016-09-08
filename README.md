@@ -1,3 +1,3 @@
 # WeatherCast
-En enkel Android-app som gir vÃ¦rvarsel for brukerens siste lokasjon.
-Data hentes fra yr.no sitt WeatherAPI: http://api.yr.no/weatherapi/documentation
+En enkel Android-app som gir værvarsel for brukerens siste lokasjon.
+Data hentes fra met.no sitt WeatherAPI: http://api.met.no/weatherapi/documentation
